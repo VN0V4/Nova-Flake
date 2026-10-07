@@ -28,6 +28,22 @@ in
           $DRY_RUN_CMD install -m 644 "${inputs.dotfiles}/dots/.config/hypr/custom/$f" "$custom/$f"
         fi
       done
+
+      # hyprland.lua + config/settings.lua require("scheme.current"), but upstream
+      # doesn't ship it. Theme changes overwrite it, so it stays writable; reseed it
+      # from the default whenever it's missing or doesn't evaluate to a full scheme.
+      scheme="${config.xdg.configHome}/hypr/scheme/current.lua"
+      if ! SCHEME="$scheme" ${pkgs.lua}/bin/lua -e '
+          local ok, t = pcall(dofile, os.getenv("SCHEME"))
+          assert(ok and type(t) == "table")
+          for _, k in ipairs({ "primary", "onPrimary", "secondary", "surface",
+                               "surfaceContainer", "onSurfaceVariant", "outlineVariant" }) do
+            assert(type(t[k]) == "string")
+          end' 2>/dev/null; then
+        echo "chromashell: repairing $scheme"
+        $DRY_RUN_CMD mkdir -p "$(dirname "$scheme")"
+        $DRY_RUN_CMD install -m 644 ${config.xdg.configFile."hypr/scheme/default.lua".source} "$scheme"
+      fi
     '';
   };
 }

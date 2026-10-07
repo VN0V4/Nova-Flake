@@ -51,10 +51,21 @@
         home-manager.nixosModules.home-manager
 
         {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          # Rename conflicting existing files to <name>.backup instead of aborting
+          home-manager.backupFileExtension = "backup";
+          # Replace an old .backup on every rebuild instead of failing
+          home-manager.overwriteBackup = true;
+
           home-manager.users.luca = {
             imports = [
               (import ./home-module.nix inputs)
+              ./force-files.nix
             ];
+
+            # gtk sets its own force flag on ~/.gtkrc-2.0
+            gtk.gtk2.force = true;
 
             programs.chromashell = {
               enable = true;

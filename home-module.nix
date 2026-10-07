@@ -472,6 +472,23 @@ in
       mimeType    = [ "x-scheme-handler/element" "x-scheme-handler/io.element.desktop" ];
     };
 
+    # ── Caelestia CLI: launcher entry ───────────────────────────────────────────
+    # The CLI ships no desktop file, so the launcher can't find it. Open kitty with
+    # the subcommand overview printed and leave an interactive shell to run them in.
+    xdg.desktopEntries.caelestia-cli = {
+      name        = "Caelestia CLI";
+      genericName = "Dotfiles Control";
+      comment     = "Main control script for the ChromaShell / Caelestia dotfiles";
+      exec        = "kitty --class caelestia-cli --title \"Caelestia CLI\" ${pkgs.writeShellScript "caelestia-cli-session" ''
+        caelestia --help
+        echo
+        exec "''${SHELL:-${pkgs.bashInteractive}/bin/bash}" -i
+      ''}";
+      icon        = "utilities-terminal";
+      terminal    = false;
+      categories  = [ "System" "Utility" ];
+    };
+
     # On NixOS, XKB rules live under /run/current-system/sw, not /usr/share.
     # The QML already checks this env var before falling back to the hardcoded path.
     # Drop-in instead of systemd.user.services.caelestia.environment — the caelestia-shell

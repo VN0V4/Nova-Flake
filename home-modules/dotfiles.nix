@@ -30,7 +30,31 @@ in
     xdg.configFile = {
 
       # ── Hyprland ───────────────────────────────────────────────────────
-      "hypr/hyprland.lua".source = "${dots}/hypr/hyprland.lua";
+      # Patched so a missing/broken scheme/current.lua can't abort the whole config
+      # (that skips every bind and drops Hyprland into emergency mode): fall back to
+      # scheme/default.lua per key, and load the flake-managed fixups at the end.
+      "hypr/hyprland.lua".source = pkgs.runCommand "chromashell-hyprland.lua" {} ''
+        cp ${dots}/hypr/hyprland.lua $out
+        chmod +w $out
+        substituteInPlace $out --replace-fail 'require("scheme.current")' '
+        do
+            local ok, sc = pcall(require, "scheme.current")
+            if not ok or type(sc) ~= "table" then sc = {} end
+            package.loaded["scheme.current"] = setmetatable(sc, { __index = require("scheme.default") })
+        end'
+        printf '\n-- Flake-managed fixups\npcall(require, "generated.fixups")\n' >> $out
+      '';
+      "hypr/scheme/default.lua".text = ''
+        return {
+          primary          = "cba6f7",
+          onPrimary        = "1e1e2e",
+          secondary        = "f5c2e7",
+          surface          = "1e1e2e",
+          surfaceContainer = "313244",
+          onSurfaceVariant = "a6adc8",
+          outlineVariant   = "45475a",
+        }
+      '';
       "hypr/config".source           = "${dots}/hypr/config";
       "hypr/scripts".source = pkgs.runCommand "chromashell-hypr-scripts" {} ''
         cp -r ${dots}/hypr/scripts $out
@@ -91,6 +115,19 @@ in
       "hypr/generated/editor.lua"  = mkIf (cfg.editor.app != null) {
         text = "require(\"config.variables\").editor = \"${editorCmds.${cfg.editor.app}}\"";
       };
+      # Upstream enters the "global" submap (where nearly all binds live) only from
+      # hyprland.start. If the first load failed, that hook never registered and a
+      # reload leaves you in the default submap with no workspace/resize binds.
+      # config.reloaded also fires during the very first load, before the IPC
+      # event manager exists — dispatching submap there segfaults (postEvent on
+      # null). Defer to the event loop with a oneshot timer so it runs post-init.
+      "hypr/generated/fixups.lua".text = ''
+        hl.on("config.reloaded", function()
+            hl.timer(function()
+                hl.dispatch(hl.dsp.submap("global"))
+            end, { timeout = 0, type = "oneshot" })
+        end)
+      '';
       "hypr/generated/browser.lua" = mkIf (cfg.browser.app != null) {
         text = "require(\"config.variables\").browser = \"${browserCmds.${cfg.browser.app}}\"";
       };

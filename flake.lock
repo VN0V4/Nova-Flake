@@ -98,7 +98,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1791066834,
-        "narHash": "sha256-jNSgJZvgPiUK2mqalopHOv/pQ0JRsOZKt5CFjlyIno0=",
+        "narHash": "sha256-35vlkhdizBDlUGI1LnpSMcvHql01yhL4zNWnR/KLopQ=",
         "owner": "SecLBL",
         "repo": "ChromaShell",
         "rev": "2bf4e88d322e9fc74453de8dfdd0b4e0550f07b6",
