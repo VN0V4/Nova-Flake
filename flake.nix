@@ -72,7 +72,9 @@
 
               browser = {
                 app = "firefox";
-                manage = true;
+                # Use the system-installed Firefox (configuration.nix) and leave
+                # its profile alone; the flake only themes it
+                manage = false;
               };
 
               comms = {

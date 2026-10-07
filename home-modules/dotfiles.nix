@@ -121,7 +121,14 @@ in
       # config.reloaded also fires during the very first load, before the IPC
       # event manager exists — dispatching submap there segfaults (postEvent on
       # null). Defer to the event loop with a oneshot timer so it runs post-init.
+      #
+      # The Lua config replaces HM's hyprland.conf, so nothing starts
+      # hyprland-session.target; without it caelestia.service (the shell: bar,
+      # sidebar, launcher) never launches and its global shortcuts are dead.
       "hypr/generated/fixups.lua".text = ''
+        hl.on("hyprland.start", function()
+            hl.exec_cmd("dbus-update-activation-environment --systemd --all && systemctl --user start hyprland-session.target")
+        end)
         hl.on("config.reloaded", function()
             hl.timer(function()
                 hl.dispatch(hl.dsp.submap("global"))
