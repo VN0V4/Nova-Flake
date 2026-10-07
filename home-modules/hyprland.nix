@@ -1,0 +1,33 @@
+inputs:
+
+{ config, lib, pkgs, ... }:
+
+let
+  inherit (lib) mkIf;
+  cfg = config.programs.chromashell;
+in
+{
+  config = mkIf cfg.enable {
+    wayland.windowManager.hyprland = {
+      enable          = true;
+      systemd.enable  = true;
+      xwayland.enable = true;
+      # ChromaShell's Hyprland config is Lua (hyprland.lua + config/*.lua).
+      # mkDefault lets a user override the config style from their own home.nix.
+      configType      = lib.mkDefault "lua";
+      extraConfig     = "";
+    };
+
+    # Erstellt ~/.config/hypr/custom/ mit leeren Dateien falls noch nicht vorhanden.
+    # Diese Dateien gehören dem User — HM fasst sie danach nie wieder an.
+    home.activation.chromashell-custom-init = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      custom="${config.xdg.configHome}/hypr/custom"
+      $DRY_RUN_CMD mkdir -p "$custom"
+      for f in env.lua rules.lua keybindings.lua autostart.lua variables.lua settings.lua; do
+        if [[ ! -f "$custom/$f" ]]; then
+          $DRY_RUN_CMD install -m 644 "${inputs.dotfiles}/dots/.config/hypr/custom/$f" "$custom/$f"
+        fi
+      done
+    '';
+  };
+}
