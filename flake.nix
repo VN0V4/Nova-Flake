@@ -71,7 +71,7 @@
               enable = true;
 
               browser = {
-                app = "librewolf";
+                app = "firefox";
                 manage = true;
               };
 
@@ -89,6 +89,19 @@
                 app = "zed";
                 manage = true;
               };
+            };
+
+            # Firefox as the default handler for web links and HTML files
+            xdg.mimeApps = {
+              enable = true;
+              defaultApplications = nixpkgs.lib.genAttrs [
+                "text/html"
+                "application/xhtml+xml"
+                "x-scheme-handler/http"
+                "x-scheme-handler/https"
+                "x-scheme-handler/about"
+                "x-scheme-handler/unknown"
+              ] (_: [ "firefox.desktop" ]);
             };
 
             home.stateVersion = "26.05";
