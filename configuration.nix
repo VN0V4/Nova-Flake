@@ -23,6 +23,18 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+ 
+  hardware.bluetooth = {
+   enable = true;
+   powerOnBoot = true;
+   settings = {
+     General = {
+       Experimental = "true"; # Improves device compatibility
+     };
+   };
+ };
+  # Bluetooth manager + tray applet, also acts as the pairing agent
+  services.blueman.enable = true;
 
   # Set your time zone.
   time.timeZone = "Europe/Bucharest";
@@ -93,10 +105,24 @@
   programs.chromashell-system.enable = true;
 #  programs.chromashell.enable = true;
   # NVIDIA
+  # GTX 1060 Mobile (Pascal) + Intel HD 630 (Optimus laptop)
   hardware.graphics.enable = true;
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
 	modesetting.enable = true;
-	open = false;
+	open = false; # open kernel modules don't support Pascal
+	# 580 is the last driver branch that supports Pascal (GTX 10xx)
+	package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
+	nvidiaSettings = true;
+	powerManagement.enable = true;
+	# PRIME offload: Intel drives the desktop, run games on the GTX with `nvidia-offload <cmd>`
+	powerManagement.finegrained = true;
+	prime = {
+	  offload.enable = true;
+	  offload.enableOffloadCmd = true;
+	  intelBusId = "PCI:0:2:0";
+	  nvidiaBusId = "PCI:1:0:0";
+	};
   };
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";

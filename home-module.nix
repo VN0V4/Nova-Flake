@@ -476,6 +476,20 @@ in
       mimeType    = [ "x-scheme-handler/element" "x-scheme-handler/io.element.desktop" ];
     };
 
+    # ── Vencord: list vesktop as "Vencord" so the launcher finds it by that name ─
+    xdg.desktopEntries.vesktop = mkIf (cfg.comms.manage && cfg.comms.app == "vencord") {
+      name        = "Vencord";
+      genericName = "Internet Messenger";
+      exec        = "vesktop %U";
+      icon        = "vesktop";
+      categories  = [ "Network" "InstantMessaging" "Chat" ];
+      mimeType    = [ "x-scheme-handler/discord" ];
+      settings    = {
+        Keywords       = "discord;vencord;vesktop;electron;chat";
+        StartupWMClass = "Vesktop";
+      };
+    };
+
     # ── Caelestia CLI: launcher entry ───────────────────────────────────────────
     # The CLI ships no desktop file, so the launcher can't find it. Open kitty with
     # the subcommand overview printed and leave an interactive shell to run them in.
