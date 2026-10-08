@@ -246,6 +246,15 @@ in
         default     = null;
         description = "Dark or light. null = keep current.";
       };
+      followWallpaper = mkOption {
+        type        = types.bool;
+        default     = false;
+        description = ''
+          Switch back to the dynamic scheme whenever a wallpaper is set, so the colours
+          always match it, even after picking a fixed scheme in the shell.
+          (While the scheme is dynamic, colours follow the wallpaper anyway.)
+        '';
+      };
     };
 
     transparency = {
@@ -286,6 +295,14 @@ in
         default     = [ ];
         example     = lib.literalExpression "lib.filesystem.listFilesRecursive ./wallpapers";
         description = "Images linked into the wallpaper folder.";
+      };
+      randomOnLogin = mkOption {
+        type        = types.bool;
+        default     = false;
+        description = ''
+          Pick a random image from the wallpaper folder at every login.
+          With the dynamic scheme, the colours follow it.
+        '';
       };
       default = mkOption {
         type        = types.nullOr types.path;
@@ -637,6 +654,10 @@ in
               in
                 "bash ${inputs.dotfiles}/dots/.config/chromashell/theming/posthook.sh${browserArg}${commsArg}";
           };
+        } // lib.optionalAttrs cfg.scheme.followWallpaper {
+          # Runs after every wallpaper change; a dynamic scheme was already regenerated
+          wallpaper.postHook =
+            ''[ "$SCHEME_NAME" = dynamic ] || ${inputs.caelestia-cli.packages.${system}.default}/bin/caelestia scheme set -n dynamic'';
         } // lib.optionalAttrs (cfg.music.app != null || cfg.comms.app != null) {
           toggles =
             lib.optionalAttrs (cfg.music.app != null) { music = musicDefs.${cfg.music.app}.caeConfig; }

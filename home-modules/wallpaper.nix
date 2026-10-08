@@ -53,6 +53,21 @@ in
       ''
     );
 
+    # Runs once per graphical login (not on rebuilds). -n: don't skip images
+    # smaller than the monitor, so every image in the folder can come up.
+    systemd.user.services.chromashell-random-wallpaper = mkIf wp.randomOnLogin {
+      Unit = {
+        Description = "ChromaShell: random wallpaper at login";
+        After       = [ "graphical-session.target" "caelestia.service" ];
+        PartOf      = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type      = "oneshot";
+        ExecStart = "${inputs.caelestia-cli.packages.${system}.default}/bin/caelestia wallpaper -r ${dir} -n";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     home.activation.chromashellWallpaperDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p "${dir}"
     '';

@@ -111,6 +111,8 @@
                 name    = "dynamic";
                 variant = "tonalspot";
                 mode    = "dark";
+                # Every new wallpaper switches back to colours generated from it
+                followWallpaper = true;
               };
 
               # Transparent bar/sidebar/launcher (opacity 0–1: base = panels, layers = cards on them)
@@ -125,6 +127,8 @@
               wallpaper = {
                 images = nixpkgs.lib.optionals (builtins.pathExists ./Wallpapers)
                   (nixpkgs.lib.filesystem.listFilesRecursive ./Wallpapers);
+                # New random wallpaper from the folder at every login
+                randomOnLogin = true;
                 # Applied on rebuild whenever this changes, e.g. ./Wallpapers/mountains.jpg
                 default = null;
               };
