@@ -19,15 +19,6 @@
     };
   };
 
-  # This Qualcomm adapter can't carry wideband (mSBC) call audio over USB: the
-  # kernel logs "corrupted SCO packet" and the headset's call output stutters
-  # and lags (Discord etc. switch the XM5 to HFP). Narrowband CVSD is stable.
-  services.pipewire.wireplumber.extraConfig."11-bluetooth-no-msbc" = {
-    "monitor.bluez.properties" = {
-      "bluez5.enable-msbc" = false;
-    };
-  };
-
   # NVIDIA
   # VA-API driver for the Intel iGPU (hardware video encode/decode, needed by gpu-screen-recorder)
   hardware.graphics.extraPackages = with pkgs; [ intel-media-driver ];
