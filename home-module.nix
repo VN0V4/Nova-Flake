@@ -44,14 +44,10 @@ let
     chromium  = { package = pkgs.chromium;  type = "chromium"; };
   };
 
-  # Builds ChromaFox (the ChromaShell browser extension) as an XPI for Firefox-based browsers.
-  chromaFoxExt = pkgs.runCommand "chromafox" {
-    nativeBuildInputs = [ pkgs.zip ];
-  } ''
-    mkdir -p $out
-    cd ${inputs.dotfiles}/extra/chromafox
-    zip -r $out/chromafox@chromashell.xpi manifest.json background.js content.js popup.html popup.css popup.js settings.html settings.css settings.js
-  '';
+  # ChromaFox (the ChromaShell browser extension), plus the autoconfig/policy that
+  # let release Firefox run it unsigned (see chromafox.nix)
+  chromaFox    = import ./chromafox.nix { inherit pkgs; inherit (inputs) dotfiles; };
+  chromaFoxExt = chromaFox.xpi;
 
   # Editor command used in the Hyprland keybind (Super+C).
   # Terminal editors are wrapped in kitty so they open a window.
@@ -477,7 +473,10 @@ in
     # ── Browser: Firefox (manage = true — HM owns install + profile) ───────────
     programs.firefox = mkIf (cfg.browser.manage && cfg.browser.app == "firefox") {
       enable  = true;
-      package = pkgs.firefox;
+      # Release Firefox ignores xpinstall.signatures.required; the autoconfig
+      # lifts the signing check and the policy installs ChromaFox
+      package = pkgs.firefox.override { extraPrefs = chromaFox.autoConfig; };
+      policies.ExtensionSettings = chromaFox.extensionSettings;
       profiles.default = {
         userChrome = builtins.readFile "${inputs.dotfiles}/dots/.config/firefox/userChrome.css";
         settings."toolkit.legacyUserProfileCustomizations.stylesheets" = true;
@@ -488,6 +487,8 @@ in
     programs.librewolf = mkIf (cfg.browser.manage && cfg.browser.app == "librewolf") {
       enable  = true;
       package = pkgs.librewolf;
+      # Allows unsigned add-ons (setting below), so the policy alone installs ChromaFox
+      policies.ExtensionSettings = chromaFox.extensionSettings;
       profiles.default = {
         userChrome = builtins.readFile "${inputs.dotfiles}/dots/.config/firefox/userChrome.css";
         settings = {
@@ -496,17 +497,6 @@ in
         };
       };
     };
-
-    # ── Browser extension (gecko, manage = true) — XPI into HM "default" profile ─
-    home.file =
-      lib.optionalAttrs (cfg.browser.manage && cfg.browser.app == "firefox") {
-        ".mozilla/firefox/default/extensions/chromafox@chromashell.xpi".source =
-          "${chromaFoxExt}/chromafox@chromashell.xpi";
-      } //
-      lib.optionalAttrs (cfg.browser.manage && cfg.browser.app == "librewolf") {
-        ".librewolf/default/extensions/chromafox@chromashell.xpi".source =
-          "${chromaFoxExt}/chromafox@chromashell.xpi";
-      };
 
     # ── Browser (gecko, manage = false) — detect profile, deploy ChromaFox ───
     # manage = false: user owns the browser install; flake parses profiles.ini
@@ -539,8 +529,12 @@ in
             else
               ${pkgs.coreutils}/bin/ln -sf "$userchrome_src" "$dir/chrome/userChrome.css"
             fi
-            ${pkgs.coreutils}/bin/cp -f "${chromaFoxExt}/chromafox@chromashell.xpi" \
-              "$dir/extensions/chromafox@chromashell.xpi"
+            # Only browsers that allow unsigned add-ons load a dropped-in XPI; Firefox
+            # gets ChromaFox from the policy set in nixos-module.nix instead
+            if [ "$allow_unsigned" = "true" ]; then
+              ${pkgs.coreutils}/bin/cp -f "${chromaFoxExt}/chromafox@chromashell.xpi" \
+                "$dir/extensions/chromafox@chromashell.xpi"
+            fi
             ${pkgs.gnugrep}/bin/grep -q "legacyUserProfileCustomizations" "$dir/user.js" 2>/dev/null || \
               printf 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\n' \
                 >> "$dir/user.js"

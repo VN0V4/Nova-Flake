@@ -1,8 +1,19 @@
+inputs:
+
 { config, lib, pkgs, ... }:
 
 let
   inherit (lib) mkEnableOption mkOption mkIf mkDefault types;
   cfg = config.programs.chromashell-system;
+
+  chromaFox = import ./chromafox.nix { inherit pkgs; inherit (inputs) dotfiles; };
+
+  # Home Manager users theming the system-installed Firefox (browser.manage = false)
+  chromaFoxUsers = lib.filterAttrs (_: u:
+    u.programs.chromashell.enable
+    && u.programs.chromashell.browser.app == "firefox"
+    && !u.programs.chromashell.browser.manage
+  ) (config.home-manager.users or { });
 in
 {
   options.programs.chromashell-system = {
@@ -99,6 +110,19 @@ CHROMASHELL_EOF
       })
     ];
     }
+
+    ##########################################################################
+    # ChromaFox in the system Firefox  (a Home Manager user has
+    # programs.chromashell.browser = { app = "firefox"; manage = false; })
+    ##########################################################################
+    # Release Firefox ignores xpinstall.signatures.required; the autoconfig lifts
+    # the signing check and the policy installs ChromaFox (see chromafox.nix)
+    (mkIf (chromaFoxUsers != { }) {
+      programs.firefox = {
+        autoConfig = chromaFox.autoConfig;
+        policies.ExtensionSettings = chromaFox.extensionSettings;
+      };
+    })
 
     ##########################################################################
     # Hyprland + XDG portal  (programs.chromashell-system.hyprland.enable)

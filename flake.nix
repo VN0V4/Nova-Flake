@@ -56,7 +56,7 @@
         ./configuration.nix
 
         # ChromaShell system module
-        ./nixos-module.nix
+        (import ./nixos-module.nix inputs)
 
         # Serpantinum system prerequisites (enabled in configuration.nix)
         serpantinum.nixosModules.default
@@ -85,10 +85,10 @@
               enable = true;
 
               browser = {
-                app = "firefox";
-                # Use the system-installed Firefox (configuration.nix) and leave
-                # its profile alone; the flake only themes it
-                manage = false;
+                app = "librewolf";
+                # The flake installs LibreWolf and owns its profile (~/.librewolf/default);
+                # Firefox stays installed from configuration.nix
+                manage = true;
               };
 
               comms = {
@@ -134,7 +134,18 @@
               };
             };
 
-            # Firefox as the default handler for web links and HTML files
+            # Keep cookies, logins and history between sessions (LibreWolf clears
+            # them on shutdown by default) and offer to save passwords
+            programs.librewolf.profiles.default.settings = {
+              "privacy.sanitize.sanitizeOnShutdown"                    = false;
+              "privacy.clearOnShutdown.cookies"                        = false;
+              "privacy.clearOnShutdown.history"                        = false;
+              "privacy.clearOnShutdown_v2.cookiesAndStorage"           = false;
+              "privacy.clearOnShutdown_v2.historyFormDataAndDownloads" = false;
+              "signon.rememberSignons"                                 = true;
+            };
+
+            # LibreWolf as the default handler for web links and HTML files
             xdg.mimeApps = {
               enable = true;
               defaultApplications = nixpkgs.lib.genAttrs [
@@ -144,7 +155,7 @@
                 "x-scheme-handler/https"
                 "x-scheme-handler/about"
                 "x-scheme-handler/unknown"
-              ] (_: [ "firefox.desktop" ]);
+              ] (_: [ "librewolf.desktop" ]);
             };
 
             home.stateVersion = "26.05";
