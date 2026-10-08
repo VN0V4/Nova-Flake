@@ -105,6 +105,29 @@
                 app = "zed";
                 manage = true;
               };
+
+              # Colours generated from the wallpaper (vibrant = more saturated)
+              scheme = {
+                name    = "dynamic";
+                variant = "tonalspot";
+                mode    = "dark";
+              };
+
+              # Transparent bar/sidebar/launcher (opacity 0–1: base = panels, layers = cards on them)
+              transparency = {
+                enable = true;
+                base   = 0.65;
+                layers = 0.4;
+              };
+
+              # Everything in ./Wallpapers (git add it!) shows up in the shell's
+              # wallpaper picker, alongside anything dropped in ~/Pictures/Wallpapers
+              wallpaper = {
+                images = nixpkgs.lib.optionals (builtins.pathExists ./Wallpapers)
+                  (nixpkgs.lib.filesystem.listFilesRecursive ./Wallpapers);
+                # Applied on rebuild whenever this changes, e.g. ./Wallpapers/mountains.jpg
+                default = null;
+              };
             };
 
             # Firefox as the default handler for web links and HTML files

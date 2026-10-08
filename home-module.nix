@@ -197,6 +197,7 @@ in
     (import ./home-modules/audio.nix     inputs)
     (import ./home-modules/dotfiles.nix  inputs)
     (import ./home-modules/theming.nix   inputs)
+    (import ./home-modules/wallpaper.nix inputs)
   ];
 
   options.programs.chromashell = {
@@ -207,6 +208,94 @@ in
         type    = types.bool;
         default = true;
         description = "Deploy jalv plugin chain and pipewire virtual nodes";
+      };
+    };
+
+    scheme = {
+      name = mkOption {
+        type = types.nullOr (types.enum [
+          "dynamic"                                       # generated from the wallpaper
+          "caelestia" "catppuccin" "darkgreen" "dracula" "everblush" "everforest"
+          "gruvbox" "nord" "oldworld" "onedark" "pywal" "rosepine" "shadotheme"
+          "solarized" "tokyonight"
+        ]);
+        default     = null;
+        description = ''
+          Colour scheme for the shell and every themed app.
+            null — leave whatever is picked in the shell alone
+          Applied only when these values change, so a scheme picked in the shell
+          survives rebuilds.
+        '';
+      };
+      flavour = mkOption {
+        type        = types.nullOr types.str;
+        default     = null;
+        example     = "mocha";
+        description = "Flavour of the scheme (e.g. catppuccin: mocha, latte, …). null = scheme's default.";
+      };
+      variant = mkOption {
+        type = types.nullOr (types.enum [
+          "tonalspot" "vibrant" "expressive" "fidelity" "fruitsalad"
+          "monochrome" "neutral" "rainbow" "content"
+        ]);
+        default     = null;
+        description = "How colours are derived (mostly matters for dynamic; vibrant = more saturated). null = keep current.";
+      };
+      mode = mkOption {
+        type        = types.nullOr (types.enum [ "dark" "light" ]);
+        default     = null;
+        description = "Dark or light. null = keep current.";
+      };
+    };
+
+    transparency = {
+      enable = mkOption {
+        type        = types.nullOr types.bool;
+        default     = null;
+        description = ''
+          Transparent shell panels (bar, sidebar, launcher, …).
+            null — leave whatever is set in the shell's settings alone
+          Written to shell.json only when these values change, so tweaks made
+          in the shell's settings UI survive rebuilds.
+        '';
+      };
+      base = mkOption {
+        type        = types.numbers.between 0 1;
+        default     = 0.85;
+        description = "Opacity of the panel backgrounds (0 = invisible, 1 = solid).";
+      };
+      layers = mkOption {
+        type        = types.numbers.between 0 1;
+        default     = 0.4;
+        description = "Opacity of elements layered on top of the panels (cards, buttons).";
+      };
+    };
+
+    wallpaper = {
+      directory = mkOption {
+        type        = types.str;
+        default     = "Pictures/Wallpapers";
+        description = ''
+          Folder (relative to $HOME) the wallpaper picker and `caelestia wallpaper -r`
+          read from. It stays a normal folder: images can be dropped in by hand too.
+          Changing it takes effect after logging out and back in.
+        '';
+      };
+      images = mkOption {
+        type        = types.listOf types.path;
+        default     = [ ];
+        example     = lib.literalExpression "lib.filesystem.listFilesRecursive ./wallpapers";
+        description = "Images linked into the wallpaper folder.";
+      };
+      default = mkOption {
+        type        = types.nullOr types.path;
+        default     = null;
+        example     = lib.literalExpression "./wallpapers/mountains.jpg";
+        description = ''
+          Wallpaper applied on rebuild (the colour scheme follows it). Only re-applied
+          when this value changes, so a wallpaper picked in the shell sticks.
+            null — leave the current wallpaper alone
+        '';
       };
     };
 
