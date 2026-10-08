@@ -1,4 +1,13 @@
-# ChromaShell-Flake
+# README
+- For my laptop: sudo nixos-rebuild switch --flake .#nixos
+- For any other machine: sudo nixos-rebuild switch --flake .#generic --impure
+
+
+
+
+
+# OLD README
+## [ChromaShell-Flake](https://github.com/SecLBL/ChromaShell-Flake)
 
 The deployment side of [ChromaShell](https://github.com/SecLBL/ChromaShell).
 The dotfiles repo on its own isn't a working system — this flake is what turns

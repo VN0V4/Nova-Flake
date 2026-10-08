@@ -34,18 +34,32 @@
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    serpantinum = {
+      url = "github:ilyamiro/serpantinum";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ nixpkgs, home-manager, ... }: {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+  outputs = inputs@{ nixpkgs, home-manager, serpantinum, ... }:
+  let
+    # Same system everywhere; only the host module (hosts/<name>) differs per machine
+    mkSystem = hostModule: nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
+      specialArgs = { inherit serpantinum; };
 
       modules = [
+        # Per-machine bits: hardware scan, GPU drivers, adapter quirks
+        hostModule
+
         # Your normal NixOS configuration
         ./configuration.nix
 
         # ChromaShell system module
         ./nixos-module.nix
+
+        # Serpantinum system prerequisites (enabled in configuration.nix)
+        serpantinum.nixosModules.default
 
         # Home Manager
         home-manager.nixosModules.home-manager
@@ -110,6 +124,15 @@
           };
         }
       ];
+    };
+  in {
+    nixosConfigurations = {
+      # This laptop: hardware scan + Nvidia/Bluetooth tweaks committed to the repo (pure)
+      nixos = mkSystem ./hosts/nixos;
+
+      # Any other machine: uses its own /etc/nixos scan, so it needs --impure:
+      #   sudo nixos-rebuild switch --flake .#generic --impure
+      generic = mkSystem ./hosts/generic;
     };
   };
 }
