@@ -2,6 +2,7 @@
 - For my laptop: sudo nixos-rebuild switch --flake .#nixos
 - For any other machine: sudo nixos-rebuild switch --flake .#generic --impure
 
+[![Support Me on Ko-fi](.github/support_me_on_kofi.png)](https://ko-fi.com/Viearc)
 
 
 

@@ -124,6 +124,7 @@
      obs-studio
      gh
      fastfetch
+     unzip
    ];
 
   # Some programs need SUID wrappers, can be configured further or are
