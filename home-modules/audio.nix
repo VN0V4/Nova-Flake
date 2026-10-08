@@ -85,6 +85,12 @@ let
             [[ "$old" != "$sink" ]] && echo "$bus: $old -> $sink"
             # Re-link even when unchanged: a reconnected device comes back without links
             bash "$audio_dir/audio-route.sh" "$bus" "$sink" ""
+            # A headset in call mode (HFP) has a single playback_MONO port, which
+            # audio-route.sh's FL/FR links miss: downmix both channels into it
+            if pw-link -i | grep -q "^$sink:playback_MONO$"; then
+              pw-link -P "''${bus}_chain_out:capture_FL" "$sink:playback_MONO" 2>/dev/null || true
+              pw-link -P "''${bus}_chain_out:capture_FR" "$sink:playback_MONO" 2>/dev/null || true
+            fi
             prune "''${bus}_chain_out" "->" "$sink"
           done
         fi
