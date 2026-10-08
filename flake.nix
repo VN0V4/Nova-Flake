@@ -143,6 +143,13 @@
               "privacy.clearOnShutdown_v2.cookiesAndStorage"           = false;
               "privacy.clearOnShutdown_v2.historyFormDataAndDownloads" = false;
               "signon.rememberSignons"                                 = true;
+
+              # Websites follow the dark system theme. resistFingerprinting always
+              # reports light mode, so use the equivalent fingerprintingProtection
+              # with every protection on except the colour scheme
+              "privacy.resistFingerprinting"               = false;
+              "privacy.fingerprintingProtection"           = true;
+              "privacy.fingerprintingProtection.overrides" = "+AllTargets,-CSSPrefersColorScheme";
             };
 
             # LibreWolf as the default handler for web links and HTML files
