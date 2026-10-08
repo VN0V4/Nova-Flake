@@ -29,7 +29,15 @@
    powerOnBoot = true;
    settings = {
      General = {
-       Experimental = "true"; # Improves device compatibility
+       Experimental = "true"; # Improves device compatibility (and exposes headset battery level)
+       # Sony WH-1000XM5 advertises over both LE and classic. BlueZ tends to
+       # pair it over LE, which this Qualcomm adapter can't do LE Audio on, so
+       # A2DP never comes up ("br-connection-profile-unavailable"). Force classic.
+       # Note: this disables BLE entirely (BLE-only mice/trackers won't work).
+       ControllerMode = "bredr";
+       FastConnectable = "true";
+       JustWorksRepairing = "always";
+       Enable = "Source,Sink,Media,Socket";
      };
    };
  };
@@ -107,6 +115,8 @@
   # NVIDIA
   # GTX 1060 Mobile (Pascal) + Intel HD 630 (Optimus laptop)
   hardware.graphics.enable = true;
+  # VA-API driver for the Intel iGPU (hardware video encode/decode, needed by gpu-screen-recorder)
+  hardware.graphics.extraPackages = with pkgs; [ intel-media-driver ];
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
 	modesetting.enable = true;
@@ -126,7 +136,7 @@
   };
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
-    WLR_NO_HARDWARE_CURSORS = "1";
+    LIBVA_DRIVER_NAME = "iHD"; # Intel VA-API (see hardware.graphics.extraPackages)
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -146,6 +156,8 @@
      wofi
      git
      keepassxc
+     element-desktop
+     obs-studio
    ];
 
   # Some programs need SUID wrappers, can be configured further or are
