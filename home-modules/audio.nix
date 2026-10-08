@@ -22,7 +22,7 @@ let
   # appear or disappear.
   audioFollow = pkgs.writeShellApplication {
     name = "chromashell-audio-follow";
-    runtimeInputs = with pkgs; [ pipewire pulseaudio jq coreutils gnugrep bash ];
+    runtimeInputs = with pkgs; [ pipewire pulseaudio jq coreutils gnugrep gawk bash ];
     text = ''
       audio_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/chromashell/audio"
       routing="$audio_dir/runtime/routing.json"
@@ -37,6 +37,22 @@ let
       }
 
       current() { jq -r --arg bus "$1" '.[$bus] // ""' "$routing" 2>/dev/null || true; }
+
+      # Drop every device link on node $1 (direction $2: "->" out, "<-" in) except
+      # those to $3. routing.json can't be trusted for this: start-audio.sh restores
+      # the saved device concurrently with our first sync, one of the two writes is
+      # lost, and the old device stayed linked too (sound on speakers AND headset).
+      prune() {
+        local node="$1" dir="$2" keep="$3" port peer
+        pw-link -l | awk -v node="$node:" -v dir="|$dir" '
+          /^[^ ]/ { cur = $0; next }
+          index(cur, node) == 1 && $1 == dir { print cur "\t" $2 }' \
+        | while IFS=$'\t' read -r port peer; do
+            [[ "$peer" == "$keep:"* ]] && continue
+            if [[ "$dir" == "->" ]]; then pw-link -d "$port" "$peer" 2>/dev/null || true
+            else pw-link -d "$peer" "$port" 2>/dev/null || true; fi
+          done
+      }
 
       link_mic() {
         local dev="$1" old="$2"
@@ -68,13 +84,15 @@ let
             old=$(current "$bus")
             [[ "$old" != "$sink" ]] && echo "$bus: $old -> $sink"
             # Re-link even when unchanged: a reconnected device comes back without links
-            bash "$audio_dir/audio-route.sh" "$bus" "$sink" "$([[ "$old" != "$sink" ]] && echo "$old")"
+            bash "$audio_dir/audio-route.sh" "$bus" "$sink" ""
+            prune "''${bus}_chain_out" "->" "$sink"
           done
         fi
         if [[ -n "$source" ]]; then
           old=$(current mic)
           [[ "$old" != "$source" ]] && echo "mic: $old -> $source"
           link_mic "$source" "$old"
+          prune mic_chain_in "<-" "$source"
         fi
       }
 
@@ -83,6 +101,9 @@ let
          && pw-link -i 2>/dev/null | grep -q '^mic_chain_in:'; do
         sleep 0.5
       done
+      sync
+      # start-audio.sh may still be restoring the saved routing; sweep up after it
+      sleep 5
       sync
 
       device_event="'(new|remove)' on (sink|source) "
