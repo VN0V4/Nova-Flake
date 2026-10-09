@@ -1,5 +1,5 @@
 {
-  description = "Luca's NixOS configuration with ChromaShell";
+  description = "N0V4's NixOS configuration with a modified version of ChromaShell";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
