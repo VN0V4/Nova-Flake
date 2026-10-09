@@ -6,6 +6,64 @@ Newest first. Edit an existing entry when a later commit changes the same topic.
 
 ---
 
+## 2026-10-09: novafetch runs on terminal open, info box bottom-right (739b709)
+
+`home-modules/dotfiles.nix` adds `fish/conf.d/novafetch.fish`, which defines
+`fish_greeting` to run `novafetch`. `fish/functions` is a read-only store
+symlink from the upstream dots, so its `fish_greeting.fish` (ChromaShell banner +
+plain fastfetch) can't be edited. A function defined in conf.d wins over
+functions/ autoload. The banner is gone on purpose.
+
+The default `novafetch` layout (`corner()`) reads `stty size`. It puts the logo
+top-left and the info box flush bottom-right, and fills the screen down to the
+last 2 rows. Those rows are for the 2-line Starship prompt; change
+`NOVAFETCH_PROMPT_LINES` if the prompt changes. It uses `\e[<col>G` to place the
+box, not padding spaces. Trailing separator spaces are stripped from the box,
+otherwise it wraps. If logo + 2 + box is wider than the terminal (about 98
+columns) or too tall, it falls back to `novafetch side` (plain fastfetch layout).
+
+Gotcha: fastfetch reports its *parent process* as the shell. Run from awk
+process substitution it said `awk`; from a `$(...)` subshell it said `bash`.
+Fix: run the info fastfetch directly from the script (no subshell, output to
+`~/.cache/novafetch.raw.info`) with `FFTS_IGNORE_PARENT=1`, which makes it start
+at the grandparent (fish). `corner` must not be called inside `$(...)` either.
+It prints nothing when it fails, so it can print straight to the terminal. A
+`.sh` script name doesn't help: fastfetch only skips parents named exactly `sh`.
+
+Tested in fake ttys (`script -c "stty rows R cols C; fish -N -c novafetch"`) at
+120x40, 80x40 and 120x20. All showed `shell fish`; small sizes used the side
+layout. Not yet tested in a real kitty window. Pending: if Hyprland resizes the
+new kitty window after fish starts, the box may miss the corner. The fix would be
+a short wait or a SIGWINCH redraw.
+
+## 2026-10-09: novafetch command, golden supernova logo (e88b463)
+
+`scripts/novafetch.sh` is packaged in `home-modules/packages.nix` via
+`writeShellApplication` (shellcheck runs at build, so keep it clean). It was first
+called fastfetch-logo and was renamed. `NOVA_ART=${../scripts/nova-art.txt}` is
+prepended to the script text, so the installed command finds the art. Run from
+the repo, it uses the file next to the script. runtimeInputs: fastfetch, gawk,
+coreutils.
+
+The fastfetch `config.jsonc` is a read-only store symlink from the upstream dots,
+so novafetch never edits it. It passes `--logo*` flags instead. User state:
+`~/.config/novafetch/logo.txt` (own art, optional) and `settings` (one line:
+`nova`, `colors C1..`, or `gradient FROM TO DIR`). No settings means nova mode
+with `nova-art.txt`. `reset` deletes both.
+
+Nova mode (awk): the core is the densest 7x3 window of braille dots. Colour is
+set by distance from the core (y doubled for cell aspect, `r^0.8`), plus a
+penalty for sparse characters (dot count of U+2800+n). Stops: white-hot, pale
+gold, gold, amber, orange, ember. Blank U+2800 is left uncoloured. Gradient and
+nova modes write raw ANSI to `~/.cache/novafetch.raw` and use `--logo-type
+file-raw` with an explicit `--logo-width/height`.
+
+Renderers force `LC_ALL=C.UTF-8`. Under the minimal env of a Nix wrapper, bash
+and awk would otherwise count bytes, not characters, and break the braille
+alignment. Verified with `env -i`. Checked visually by converting the ANSI
+output to SVG -> PNG with ImageMagick (DejaVu Sans Mono draws empty braille
+dots as rings; that's the font, not the colours).
+
 ## 2026-10-09: Dark websites in LibreWolf (de58511)
 
 LibreWolf ships `privacy.resistFingerprinting = true`, which always tells websites
