@@ -91,6 +91,13 @@ in
       # ── Fish ───────────────────────────────────────────────────────────
       "fish/config.fish".source   = "${dots}/fish/config.fish";
       "fish/functions".source     = "${dots}/fish/functions";
+      # Replaces the upstream greeting (banner + fastfetch) with novafetch.
+      # conf.d runs first, and a defined function wins over functions/ autoload.
+      "fish/conf.d/novafetch.fish".text = ''
+        function fish_greeting
+            command -q novafetch; and novafetch
+        end
+      '';
 
       # ── Starship ───────────────────────────────────────────────────────
       "starship.toml".source = "${dots}/starship.toml";

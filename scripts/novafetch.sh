@@ -19,7 +19,10 @@ usage() {
   cat <<'EOF'
 Usage: novafetch [command] [args]
 
-  (no command) [-- ARGS]      run fastfetch with the logo (ARGS go to fastfetch)
+  (no command) [-- ARGS]      logo top-left, info box bottom-right of the terminal
+                              (ARGS go to fastfetch; falls back to `side` if
+                              the terminal is too small)
+  side [ARGS]                 plain fastfetch layout, info box next to the logo
   set [FILE | -]              use your own art from FILE, stdin (-), or $EDITOR
   edit                        open your art in $EDITOR
   nova                        golden supernova shading (the default)
@@ -214,11 +217,63 @@ logo_args() {
   esac
 }
 
+# Logo in the top-left corner, info box pinned to the bottom-right, filling the
+# terminal down to the prompt. Returns 1 (printing nothing) if it doesn't fit.
+corner() {
+  local rows cols size info="$raw.info"
+  size=$(stty size </dev/tty 2>/dev/null) || return 1
+  read -r rows cols <<<"$size"
+  logo_args
+  # fastfetch reports its parent process as the shell. Run it directly from this
+  # script (no subshell, so the parent is us) and have it skip us, so it finds
+  # your real shell.
+  FFTS_IGNORE_PARENT=1 fastfetch --pipe false --logo none "$@" >"$info"
+  LC_ALL=C.UTF-8 awk '
+    function visible(s) { gsub(/\033\[[0-9;?]*[A-Za-z]/, "", s); return s }
+    # drop blank lines at the start and end
+    function trim(a, n,   i, j, k) {
+      i = 1; while (i <= n && visible(a[i]) ~ /^[ \t⠀]*$/) i++
+      j = n; while (j >= i && visible(a[j]) ~ /^[ \t⠀]*$/) j--
+      for (k = i; k <= j; k++) a[k - i + 1] = a[k]
+      return j - i + 1
+    }
+    FNR == 1 { file++ }
+    file == 1 { logo[++nl] = $0 }
+    file == 2 {
+      # strip trailing padding so the box sits flush against the right edge
+      sub(/( |\033\[[0-9;]*m)+$/, "")
+      box[++nb] = $0 "\033[0m"
+    }
+    END {
+      nl = trim(logo, nl); nb = trim(box, nb)
+      for (i = 1; i <= nl; i++) if (length(visible(logo[i])) > lw) lw = length(visible(logo[i]))
+      for (i = 1; i <= nb; i++) if (length(visible(box[i])) > bw) bw = length(visible(box[i]))
+      height = rows - reserve
+      if (lw + 2 + bw > cols || nl > height || nb > height) exit 1
+      col = cols - bw + 1
+      for (y = 1; y <= height; y++) {
+        b = y - (height - nb)
+        line = (y <= nl) ? logo[y] "\033[0m" : ""
+        if (b >= 1) line = line "\033[" col "G" box[b]
+        print line
+      }
+    }
+  ' rows="$rows" cols="$cols" reserve="${NOVAFETCH_PROMPT_LINES:-2}" \
+    <(fastfetch "${ff_args[@]}" --pipe false --structure none --logo-padding-top 0) \
+    "$info"
+}
+
 cmd=${1:-}
 [[ $# -gt 0 ]] && shift
 
 case $cmd in
   ""|--)
+    if ! { [[ -t 1 ]] && corner "$@"; }; then
+      logo_args
+      exec fastfetch "${ff_args[@]}" "$@"
+    fi
+    ;;
+  side)
     logo_args
     exec fastfetch "${ff_args[@]}" "$@"
     ;;
