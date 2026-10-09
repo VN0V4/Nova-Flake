@@ -55,6 +55,11 @@ in
       mission-center  # GUI system monitor — sysmon toggle target
       ddcutil
       fastfetch
+      (writeShellApplication {
+        name = "novafetch";   # fastfetch with custom coloured ASCII art
+        runtimeInputs = [ fastfetch gawk coreutils ];
+        text = "NOVA_ART=${../scripts/nova-art.txt}\n" + builtins.readFile ../scripts/novafetch.sh;
+      })
       eza
 
       # ── System / scripting ───────────────────
