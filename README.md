@@ -1,10 +1,16 @@
 # README
+## Preview
+<img src="screenshot.png" width="800" height="400">
+<a href="https://ko-fi.com/n0va">
+  <img src=".github/support_me_on_kofi.png" alt="" width="250" height="100">
+</a>
+
+## Building
 - For my laptop: sudo nixos-rebuild switch --flake .#nixos
 - For any other machine: sudo nixos-rebuild switch --flake .#generic --impure
 
-[![Support Me on Ko-fi](.github/support_me_on_kofi.png)](https://ko-fi.com/N0VA)
-
-
+## Custom Commands
+- novafetch
 
 
 # OLD README
