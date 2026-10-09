@@ -87,6 +87,38 @@
 
   # Install firefox.
   programs.firefox.enable = true;
+
+  # Run AppImages: `appimage-run file.AppImage`, or directly (./file.AppImage
+  # after chmod +x) thanks to binfmt. NixOS has no /lib, so a plain AppImage
+  # can't find its libraries; appimage-run gives it an FHS environment.
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
+  # Run plain Linux binaries built for other distros (e.g. Sunnify in
+  # ~/.local/bin). They look for /lib64/ld-linux-x86-64.so.2, which NixOS
+  # doesn't have; nix-ld provides it and serves the libraries below. This set
+  # covers Qt/PyInstaller GUI apps; add more if an app says "lib….so not found".
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      stdenv.cc.cc zlib openssl krb5
+      glib dbus fontconfig freetype
+      libGL mesa libdrm libxkbcommon wayland
+      libx11 libxcb libxcb-wm libxcb-image libxcb-keysyms libxcb-render-util libxcb-cursor
+      libxext libxrender libxi libsm libice
+      alsa-lib libpulseaudio
+    ];
+  };
+
+  # Keyboard layouts for those binaries: their bundled libxkbcommon looks in
+  # /usr/share/X11/xkb, which NixOS doesn't have ("failed to create xkb
+  # context"). Nix-built apps already use this same data, so this is harmless.
+  environment.sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
+
+  # Put ~/.local/bin on PATH (installers like Sunnify's put programs there)
+  environment.localBinInPath = true;
   
   # Customizations
   services.displayManager.defaultSession = "hyprland";
@@ -134,6 +166,7 @@
      gh
      fastfetch
      unzip
+     tauon
    ];
 
   # Some programs need SUID wrappers, can be configured further or are
