@@ -6,6 +6,47 @@ Newest first. Edit an existing entry when a later commit changes the same topic.
 
 ---
 
+## 2026-10-09: LibreWolf limited to 1 GB RAM, zram swap
+
+Measured before the change, with real (PSS) memory: LibreWolf was ~4.65 GB of
+~5.9 GB used (about 20 per-site tab processes, ~150-250 MB each). Claude Code
+was ~0.65 GB, Quickshell ~0.3 GB, PipeWire ~0.2 GB. The system had 10 GB
+available, so this was about the user wanting a lower footprint, not running out.
+The user chose a soft limit and to keep site isolation (Fission) on; turning it
+off was offered and declined for security.
+
+- `flake.nix`: a `hiPrio` wrapper named `librewolf` starts the real binary in a
+  user scope: `systemd-run --user --scope --unit=librewolf --slice=app.slice -p
+  MemoryHigh=1G`. Without it LibreWolf runs inside `caelestia.service` (the
+  shell launches it), where it can't be limited without limiting the bar. If
+  `librewolf.scope` is already active, the wrapper just execs the binary (it
+  hands off to the running instance). The `home-manager.users.luca` block
+  became a function (`{ config, pkgs, ... }:`) so it can reference
+  `config.programs.librewolf.finalPackage`.
+- `flake.nix`: Auto Tab Discard is installed by policy from AMO
+  (`{c2c003ee-...}`, normal_installed), with default settings (discard after
+  10 min). It merges with ChromaFox's `ExtensionSettings` without conflict.
+  Prefs: `browser.sessionhistory.max_total_viewers = 0`,
+  `browser.cache.memory.capacity = 65536`, `dom.ipc.processPrelaunch.enabled =
+  false`, `browser.tabs.unloadOnLowMemory = true`.
+- `configuration.nix`: `zramSwap` at 50%. There was no swap at all, and
+  `MemoryHigh` with no swap can only drop file cache, so LibreWolf would just
+  stall. `MemoryHigh` never kills; no `MemoryMax` on purpose.
+
+Verified after the rebuild: `systemctl --user status librewolf.scope` showed
+`Memory: 1023.7M (high: 1G, ... swap: 1.3G)`. So it sits at the cap, with the
+overflow compressed in zram. That zram memory is still real RAM (~1/3 of the
+swapped size). If LibreWolf feels sluggish, raise `MemoryHigh` to `1.5G`.
+
+Also asked and answered (no change made):
+- *Whole system <= 1.3 GB?* Not feasible. With LibreWolf closed it already used
+  ~2.9 GB: desktop/services ~1.0 GB, kernel/GPU ~0.6-0.9 GB, Claude Code
+  ~0.66 GB. A system-wide hard cap would kill or stall programs.
+- *CPU <= 20-25%?* Already ~7% total (power-saver profile; i7-7700HQ, 8
+  threads). `top` shows per-thread percentages, which look higher. No cap was
+  added. If wanted later, the suggestion was `-p CPUQuota=200%` on the
+  LibreWolf scope only, not system-wide.
+
 ## 2026-10-09: novafetch runs on terminal open, info box bottom-right (739b709)
 
 `home-modules/dotfiles.nix` adds `fish/conf.d/novafetch.fish`, which defines

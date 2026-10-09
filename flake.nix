@@ -72,7 +72,7 @@
           # Replace an old .backup on every rebuild instead of failing
           home-manager.overwriteBackup = true;
 
-          home-manager.users.luca = {
+          home-manager.users.luca = { config, pkgs, ... }: {
             imports = [
               (import ./home-module.nix inputs)
               ./force-files.nix
@@ -150,7 +150,41 @@
               "privacy.resistFingerprinting"               = false;
               "privacy.fingerprintingProtection"           = true;
               "privacy.fingerprintingProtection.overrides" = "+AllTargets,-CSSPrefersColorScheme";
+
+              # Lower memory use (site isolation stays on): no cached copies of
+              # pages for back/forward, a smaller in-memory cache (64 MB, the
+              # disk cache is unchanged), no spare process kept warm, and unload
+              # tabs when memory runs low
+              "browser.sessionhistory.max_total_viewers" = 0;
+              "browser.cache.memory.capacity"            = 65536;
+              "dom.ipc.processPrelaunch.enabled"         = false;
+              "browser.tabs.unloadOnLowMemory"           = true;
             };
+
+            # Auto Tab Discard: unloads tabs you haven't looked at for 10 minutes
+            # (they reload when clicked). Each open site costs ~150-250 MB.
+            programs.librewolf.policies.ExtensionSettings."{c2c003ee-bd69-42a2-b0e9-6f34222cb046}" = {
+              installation_mode = "normal_installed";
+              install_url       = "https://addons.mozilla.org/firefox/downloads/latest/auto-tab-discard/latest.xpi";
+            };
+
+            # Start LibreWolf in its own systemd scope with a 1 GB soft limit.
+            # Otherwise it runs inside caelestia.service (the shell launches it),
+            # where it can't be limited on its own. MemoryHigh never kills
+            # anything: past 1 GB the kernel pushes LibreWolf's memory into zram
+            # (configuration.nix). This wrapper takes priority over the real
+            # `librewolf`, so the keybind, launcher and links all go through it.
+            home.packages = [
+              (nixpkgs.lib.hiPrio (pkgs.writeShellScriptBin "librewolf" ''
+                lw=${config.programs.librewolf.finalPackage}/bin/librewolf
+                # Already running: this call just opens a window in that instance
+                if systemctl --user --quiet is-active librewolf.scope; then
+                  exec "$lw" "$@"
+                fi
+                exec systemd-run --user --scope --quiet --unit=librewolf --slice=app.slice \
+                  -p MemoryHigh=1G "$lw" "$@"
+              ''))
+            ];
 
             # LibreWolf as the default handler for web links and HTML files
             xdg.mimeApps = {

@@ -105,6 +105,15 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # Compressed swap in RAM (zram): there is no disk swap, so without it memory
+  # limits like LibreWolf's MemoryHigh (flake.nix) have nowhere to push memory.
+  # Pages compress roughly 3:1. Up to half of RAM can be used, and only while
+  # something is swapped out.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 50;
+  };
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
