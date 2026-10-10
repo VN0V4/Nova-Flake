@@ -79,20 +79,10 @@ in
       ddcutil
       fastfetch
       (writeShellApplication {
-        name = "novafetch";   # animated fastfetch; no arguments plays the gold supernova
-        runtimeInputs = [ anifetch ];
-        # anifetch copies the video into its assets folder on every run, keeping
-        # the read-only mode of store files, so the second copy fails. Put a
-        # writable copy there first; given that path, anifetch skips the copy.
-        text = ''
-          if [ $# -eq 0 ]; then
-            video="''${XDG_DATA_HOME:-$HOME/.local/share}/anifetch/assets/${baseNameOf supernovaGold}"
-            [ -f "$video" ] || install -D -m 644 ${supernovaGold} "$video"
-            chmod u+w "$video"
-            set -- "$video"
-          fi
-          exec anifetch "$@"
-        '';
+        name = "novafetch";   # fastfetch with custom coloured ASCII art; -a plays the gold supernova
+        runtimeInputs = [ fastfetch gawk coreutils anifetch ];
+        text = "NOVA_ART=${../scripts/nova-art.txt}\nNOVA_VIDEO=${supernovaGold}\n"
+          + builtins.readFile ../scripts/novafetch.sh;
       })
       eza
 
