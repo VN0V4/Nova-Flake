@@ -1,6 +1,6 @@
 # README
 ## Preview
-<img src="desktop.gif" width="800" height="400">
+<img src=".github/screenshot.png" width="800" height="400">
 <a href="https://ko-fi.com/n0va">
   <img src=".github/support_me_on_kofi.png" alt="" width="250" height="100">
 </a>
