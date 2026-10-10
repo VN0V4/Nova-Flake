@@ -130,11 +130,14 @@
                 layers = 0.4;
               };
 
-              # Everything in ./Wallpapers (git add it!) shows up in the shell's
-              # wallpaper picker, alongside anything dropped in ~/Pictures/Wallpapers
+              # Images in ./Wallpapers (git add -f them, see its README) show up in
+              # the shell's wallpaper picker, alongside anything dropped in
+              # ~/Pictures/Wallpapers
               wallpaper = {
-                images = nixpkgs.lib.optionals (builtins.pathExists ./Wallpapers)
-                  (nixpkgs.lib.filesystem.listFilesRecursive ./Wallpapers);
+                images = builtins.filter
+                  (f: builtins.match ".*\\.(jpe?g|png|webp|gif)" (nixpkgs.lib.toLower (toString f)) != null)
+                  (nixpkgs.lib.optionals (builtins.pathExists ./Wallpapers)
+                    (nixpkgs.lib.filesystem.listFilesRecursive ./Wallpapers));
                 # New random wallpaper from the folder at every login
                 randomOnLogin = true;
                 # Applied on rebuild whenever this changes, e.g. ./Wallpapers/mountains.jpg

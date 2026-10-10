@@ -1,1 +1,5 @@
 result
+
+# Personal wallpapers stay local; only the README is tracked
+Wallpapers/*
+!Wallpapers/README.md
