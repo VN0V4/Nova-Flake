@@ -6,11 +6,8 @@ let
   inherit (lib) mkIf;
   cfg = config.programs.chromashell;
 
-  # The ./novafetch input is a subfolder of this repo's store copy, so its path
-  # changes on every dotfiles edit. A separate copy is addressed by the
-  # submodule's contents alone, so anifetch and the video below only rebuild
-  # (and re-render their cache) when novafetch itself changes.
-  novafetchSrc = builtins.path { path = inputs.novafetch.outPath; name = "novafetch-source"; };
+  # The novafetch repo (github:VN0V4/novafetch), from the flake input.
+  novafetchSrc = inputs.novafetch.outPath;
   anifetch = pkgs.callPackage "${novafetchSrc}/nix/package.nix" { };
 
   # novafetch's default video: the vecteezy supernova graded sunny gold.

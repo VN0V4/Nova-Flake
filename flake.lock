@@ -273,14 +273,18 @@
         ]
       },
       "locked": {
-        "path": "./novafetch",
-        "type": "path"
+        "lastModified": 1791600326,
+        "narHash": "sha256-8hEv4SCpyyClUwHqjH24brcMWUty57lm0VT3fQfb++s=",
+        "owner": "VN0V4",
+        "repo": "novafetch",
+        "rev": "77c9b1ccc5a4b003fe582cd0b287b40c394bc0bb",
+        "type": "github"
       },
       "original": {
-        "path": "./novafetch",
-        "type": "path"
-      },
-      "parent": []
+        "owner": "VN0V4",
+        "repo": "novafetch",
+        "type": "github"
+      }
     },
     "quickshell": {
       "inputs": {

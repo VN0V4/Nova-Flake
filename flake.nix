@@ -40,14 +40,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Include git submodules (./novafetch) in this flake's source
-    self.submodules = true;
-
     # novafetch: animated fastfetch (video → chafa frames beside the system
-    # info), a fork of anifetch. Built from the ./novafetch submodule; update with
-    #   git submodule update --remote novafetch
+    # info), a fork of anifetch. Update with
+    #   nix flake update novafetch
     novafetch = {
-      url = "./novafetch";
+      url = "github:VN0V4/novafetch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
