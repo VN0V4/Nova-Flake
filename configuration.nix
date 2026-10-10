@@ -166,8 +166,13 @@
      gh
      fastfetch
      unzip
+     zip
+     cmatrix
+     btop
      opencode
      tauon
+     nicotine-plus
+     proton-vpn
    ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -184,7 +189,9 @@
   # services.openssh.enable = true;
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [ 2234 ]; # Soulseek (Nicotine+) listening port
+  # Proton VPN's WireGuard tunnel fails the strict reverse-path check
+  networking.firewall.checkReversePath = "loose";
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
