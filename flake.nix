@@ -39,6 +39,17 @@
       url = "github:ilyamiro/serpantinum";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Include git submodules (./novafetch) in this flake's source
+    self.submodules = true;
+
+    # novafetch: animated fastfetch (video → chafa frames beside the system
+    # info), a fork of anifetch. Built from the ./novafetch submodule; update with
+    #   git submodule update --remote novafetch
+    novafetch = {
+      url = "./novafetch";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, serpantinum, ... }:

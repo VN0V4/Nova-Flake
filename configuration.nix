@@ -21,7 +21,7 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
- 
+
   hardware.bluetooth = {
    enable = true;
    powerOnBoot = true;
@@ -119,7 +119,7 @@
 
   # Put ~/.local/bin on PATH (installers like Sunnify's put programs there)
   environment.localBinInPath = true;
-  
+
   # Customizations
   services.displayManager.defaultSession = "hyprland";
   programs.hyprland = {
@@ -166,6 +166,7 @@
      gh
      fastfetch
      unzip
+     opencode
      tauon
    ];
 
