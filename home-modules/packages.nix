@@ -6,6 +6,13 @@ let
   inherit (lib) mkIf;
   cfg = config.programs.chromashell;
 
+  # The ./novafetch input is a subfolder of this repo's store copy, so its path
+  # changes on every dotfiles edit. A separate copy is addressed by the
+  # submodule's contents alone, so anifetch and the video below only rebuild
+  # (and re-render their cache) when novafetch itself changes.
+  novafetchSrc = builtins.path { path = inputs.novafetch.outPath; name = "novafetch-source"; };
+  anifetch = pkgs.callPackage "${novafetchSrc}/nix/package.nix" { };
+
   # novafetch's default video: the vecteezy supernova graded sunny gold.
   # From ~2.6 s (after the flash) gamma/contrast ramp up so the remnant and
   # debris stay visible; the curves keep space black and map brightness onto
@@ -18,7 +25,7 @@ let
     "scale=960:-2"
   ];
   supernovaGold = pkgs.runCommand "supernova-gold.mp4" { nativeBuildInputs = [ pkgs.ffmpeg ]; } ''
-    ffmpeg -v error -i ${inputs.novafetch}/src/anifetch/assets/vecteezy_explosion-of-a-new-supernova-in-outer-space_54201863.mp4 \
+    ffmpeg -v error -i ${novafetchSrc}/src/anifetch/assets/vecteezy_explosion-of-a-new-supernova-in-outer-space_54201863.mp4 \
       -vf ${lib.escapeShellArg supernovaGrade} -an -c:v libx264 -crf 18 -pix_fmt yuv420p "$out"
   '';
 in
@@ -73,8 +80,19 @@ in
       fastfetch
       (writeShellApplication {
         name = "novafetch";   # animated fastfetch; no arguments plays the gold supernova
-        runtimeInputs = [ inputs.novafetch.packages.${pkgs.stdenv.hostPlatform.system}.default ];
-        text = ''exec anifetch "''${@:-${supernovaGold}}"'';
+        runtimeInputs = [ anifetch ];
+        # anifetch copies the video into its assets folder on every run, keeping
+        # the read-only mode of store files, so the second copy fails. Put a
+        # writable copy there first; given that path, anifetch skips the copy.
+        text = ''
+          if [ $# -eq 0 ]; then
+            video="''${XDG_DATA_HOME:-$HOME/.local/share}/anifetch/assets/${baseNameOf supernovaGold}"
+            [ -f "$video" ] || install -D -m 644 ${supernovaGold} "$video"
+            chmod u+w "$video"
+            set -- "$video"
+          fi
+          exec anifetch "$@"
+        '';
       })
       eza
 
