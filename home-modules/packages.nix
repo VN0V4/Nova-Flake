@@ -25,6 +25,36 @@ let
     ffmpeg -v error -i ${novafetchSrc}/src/anifetch/assets/vecteezy_explosion-of-a-new-supernova-in-outer-space_54201863.mp4 \
       -vf ${lib.escapeShellArg supernovaGrade} -an -c:v libx264 -crf 18 -pix_fmt yuv420p "$out"
   '';
+
+  # ytmd (github:VN0V4/ytmd), from the flake input. Same environment as its
+  # shell.nix: yt-dlp pinned newer than nixpkgs (older releases hit HTTP 403),
+  # ffmpeg for MP3 conversion, deno for YouTube's JS challenges. To bump
+  # yt-dlp: change the version, set hash = "", rebuild and copy the printed hash.
+  ytmd = let
+    python = pkgs.python3.withPackages (ps: with ps; [
+      ytmusicapi
+      (yt-dlp.overridePythonAttrs (old: rec {
+        version = "2026.8.19";
+        src = pkgs.fetchPypi {
+          pname = "yt_dlp";
+          inherit version;
+          hash = "sha256-niE+SM6jXGazeOREeQPxGPY5Kl+jgKK21wcOyG9OCvE=";
+        };
+        patches = [ ];
+        postPatch = "";
+      }))
+      yt-dlp-ejs
+      mutagen
+      pillow
+      textual
+      textual-image
+    ]);
+  in pkgs.runCommand "ytmd" { nativeBuildInputs = [ pkgs.makeWrapper ]; meta.mainProgram = "ytmd"; } ''
+    install -Dm644 -t $out/share/ytmd ${inputs.ytmd}/ytmd.py ${inputs.ytmd}/tui.py
+    makeWrapper ${python}/bin/python3 $out/bin/ytmd \
+      --add-flags $out/share/ytmd/ytmd.py \
+      --prefix PATH : ${lib.makeBinPath [ pkgs.ffmpeg-headless pkgs.deno ]}
+  '';
 in
 {
   config = mkIf cfg.enable {
@@ -82,6 +112,10 @@ in
           + builtins.readFile ../scripts/novafetch.sh;
       })
       eza
+
+      # ── VN0V4 tools ──────────────────────────
+      ytmd            # YouTube Music → tagged MP3s (TUI, or `ytmd listen-again`)
+      inputs.paperoo.packages.${pkgs.stdenv.hostPlatform.system}.default   # terminal wallpaper browser
 
       # ── System / scripting ───────────────────
       inotify-tools

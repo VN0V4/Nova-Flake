@@ -47,6 +47,20 @@
       url = "github:VN0V4/novafetch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # ytmd: YouTube Music downloader (TUI + batch). No flake, packaged in
+    # home-modules/packages.nix. Update with  nix flake update ytmd
+    ytmd = {
+      url = "github:VN0V4/ytmd";
+      flake = false;
+    };
+
+    # paperoo: terminal wallpaper browser (wallhaven). Update with
+    #   nix flake update paperoo
+    paperoo = {
+      url = "github:VN0V4/paperoo";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, serpantinum, ... }:

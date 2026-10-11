@@ -286,6 +286,26 @@
         "type": "github"
       }
     },
+    "paperoo": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791718626,
+        "narHash": "sha256-S2mGaH/CE3fso6IENzOCGGPAxgZaOXFQVvPJPF9M77A=",
+        "owner": "VN0V4",
+        "repo": "paperoo",
+        "rev": "bc0192277f7e6a2fbbf48041dcbb029b899ecebb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "VN0V4",
+        "repo": "paperoo",
+        "type": "github"
+      }
+    },
     "quickshell": {
       "inputs": {
         "nixpkgs": [
@@ -337,8 +357,10 @@
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "novafetch": "novafetch",
+        "paperoo": "paperoo",
         "serpantinum": "serpantinum",
         "spicetify-nix": "spicetify-nix",
+        "ytmd": "ytmd",
         "zen-browser": "zen-browser"
       }
     },
@@ -412,6 +434,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "ytmd": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791736372,
+        "narHash": "sha256-FnIUwBKueIwn2+pMmX2mafUvpk0emGbYBGtMFU5QoT8=",
+        "owner": "VN0V4",
+        "repo": "ytmd",
+        "rev": "c390229f0742af6458c5a558f4dfa6f57664311b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "VN0V4",
+        "repo": "ytmd",
         "type": "github"
       }
     },
