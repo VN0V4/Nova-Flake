@@ -360,7 +360,6 @@
         "paperoo": "paperoo",
         "serpantinum": "serpantinum",
         "spicetify-nix": "spicetify-nix",
-        "ytmd": "ytmd",
         "zen-browser": "zen-browser"
       }
     },
@@ -434,22 +433,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "ytmd": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791736372,
-        "narHash": "sha256-FnIUwBKueIwn2+pMmX2mafUvpk0emGbYBGtMFU5QoT8=",
-        "owner": "VN0V4",
-        "repo": "ytmd",
-        "rev": "c390229f0742af6458c5a558f4dfa6f57664311b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "VN0V4",
-        "repo": "ytmd",
         "type": "github"
       }
     },
