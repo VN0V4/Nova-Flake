@@ -173,6 +173,9 @@
      tauon
      nicotine-plus
      proton-vpn
+     python3
+     deno
+     ffmpeg
    ];
 
   # Some programs need SUID wrappers, can be configured further or are
