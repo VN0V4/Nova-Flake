@@ -25,6 +25,27 @@ let
     ffmpeg -v error -i ${novafetchSrc}/src/anifetch/assets/vecteezy_explosion-of-a-new-supernova-in-outer-space_54201863.mp4 \
       -vf ${lib.escapeShellArg supernovaGrade} -an -c:v libx264 -crf 18 -pix_fmt yuv420p "$out"
   '';
+
+  # Pomatez: pomodoro timer that can minimize to the tray. Not in nixpkgs, so
+  # the official AppImage is wrapped. To update, bump version and hash (the
+  # release lists a sha256 per asset; convert with  nix hash convert --to sri).
+  pomatez = let
+    pname   = "pomatez";
+    version = "1.11.0";
+    src = pkgs.fetchurl {
+      url  = "https://github.com/zidoro/pomatez/releases/download/v${version}/Pomatez-v${version}-linux-x86_64.AppImage";
+      hash = "sha256-Pnt+7Fjj1kSqvHrfhJRp9CUdYNHzMHLbhJAuu4alg3o=";
+    };
+    contents = pkgs.appimageTools.extract { inherit pname version src; };
+  in pkgs.appimageTools.wrapType2 {
+    inherit pname version src;
+    extraInstallCommands = ''
+      install -Dm444 ${contents}/pomatez.desktop $out/share/applications/pomatez.desktop
+      substituteInPlace $out/share/applications/pomatez.desktop \
+        --replace-fail 'Exec=AppRun' 'Exec=pomatez'
+      cp -r ${contents}/usr/share/icons $out/share/
+    '';
+  };
 in
 {
   config = mkIf cfg.enable {
@@ -82,6 +103,10 @@ in
           + builtins.readFile ../scripts/novafetch.sh;
       })
       eza
+
+      # ── Apps ─────────────────────────────────
+      foliate         # EPUB reader (dark reading theme under View → Theme)
+      pomatez         # pomodoro timer; enable Minimize to Tray in its settings
 
       # ── VN0V4 tools ──────────────────────────
       inputs.paperoo.packages.${pkgs.stdenv.hostPlatform.system}.default   # terminal wallpaper browser

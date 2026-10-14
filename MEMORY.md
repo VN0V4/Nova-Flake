@@ -6,6 +6,25 @@ Newest first. Edit an existing entry when a later commit changes the same topic.
 
 ---
 
+## 2026-10-14: Foliate and Pomatez preinstalled
+
+`home-modules/packages.nix`, new "Apps" section. Foliate (EPUB reader) comes
+from nixpkgs. The window follows the dark system theme; the reading page has
+its own theme under View → Theme.
+
+Pomatez (pomodoro timer) was picked because it can minimize/close to the tray
+(Caelestia's bar shows tray icons). It isn't in nixpkgs, so the v1.11.0 x86_64
+AppImage is wrapped with `appimageTools.wrapType2`. The `.desktop` file is
+copied out and its `Exec=AppRun` is rewritten to `pomatez`. Its log errors
+about Discord RPC (optional "now playing" status) and "not an AppImage"
+(auto-updater) are harmless. Updates happen by bumping version and hash.
+Gnome Solanum and gnome-pomodoro were skipped: no StatusNotifier tray icon.
+
+Both were first installed with `nix profile add`, because sudo needed a
+password. **Pending:** `sudo nixos-rebuild switch --flake .#nixos`, then
+`nix profile remove foliate pomatez` so the profile copies don't shadow these.
+The local flake at `~/nix-pkgs/pomatez` can be deleted after that.
+
 ## 2026-10-09: LibreWolf limited to 1 GB RAM, zram swap
 
 Measured before the change, with real (PSS) memory: LibreWolf was ~4.65 GB of
